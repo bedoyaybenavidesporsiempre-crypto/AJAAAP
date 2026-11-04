@@ -1,0 +1,13 @@
+{
+  "name": "AJA' APP",
+  "short_name": "AJA' APP",
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#ffffff",
+  "theme_color": "#21638b",
+  "icons": [
+    { "src": "/aja_app_icono_sin_letras.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/aja_app_icono_sin_letras.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
