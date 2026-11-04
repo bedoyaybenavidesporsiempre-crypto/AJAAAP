@@ -73,7 +73,7 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
     return releaseScanner(scanner);
   };
 
-  const processToken = async (token: string) => {
+  const processToken = async (token: string): Promise<boolean> => {
     setBusy(true);
     setError('');
 
@@ -81,7 +81,7 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
     if (!valid) {
       setError('El código no es válido o ya expiró. Revisa la pantalla en la sala de espera.');
       setBusy(false);
-      return;
+      return false;
     }
 
     const gpsDistance = result.distance ?? 0;
@@ -90,15 +90,20 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
 
     if (apt) {
       onCheckedIn();
-    } else {
-      setError('No se pudo registrar el check-in. Intenta de nuevo.');
+      return true;
     }
+    setError('No se pudo registrar el check-in. Intenta de nuevo.');
+    return false;
   };
 
   useEffect(() => {
     onDecodeRef.current = (decodedText: string) => {
       setScannerState('idle');
-      void stopCamera().then(() => processToken(extractToken(decodedText)));
+      void stopCamera()
+        .then(() => processToken(extractToken(decodedText)))
+        .then((checkedIn) => {
+          if (!checkedIn) void startCamera();
+        });
     };
   });
 
@@ -110,7 +115,6 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
   }, []);
 
   const startCamera = async () => {
-    setError('');
     handledRef.current = false;
     setScannerState('starting');
     try {
@@ -132,6 +136,11 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
       await stopCamera();
       setScannerState(isPermissionError(err) ? 'denied' : 'error');
     }
+  };
+
+  const handleStartCamera = () => {
+    setError('');
+    void startCamera();
   };
 
   const handleStopCamera = async () => {
@@ -256,7 +265,7 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
 
           {!busy && scannerState === 'idle' && (
             <button
-              onClick={startCamera}
+              onClick={handleStartCamera}
               className="w-full bg-blue-700 text-white font-semibold py-3.5 rounded-xl
                          hover:bg-blue-800 active:scale-[0.98] transition-all
                          flex items-center justify-center gap-2 shadow-sm shadow-blue-200"
@@ -293,7 +302,7 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
               </p>
               <div className="flex gap-2">
                 <button
-                  onClick={startCamera}
+                  onClick={handleStartCamera}
                   className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-red-200 text-red-700 font-semibold py-2.5 rounded-lg text-sm hover:bg-red-50 transition-all"
                 >
                   <RefreshCw className="w-4 h-4" />
