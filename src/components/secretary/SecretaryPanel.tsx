@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { TabStrip } from '../TabStrip';
+import { AppointmentsHistoryTab } from './AppointmentsHistoryTab';
 import type { User as AppUser, Appointment, DoctorScheduleEntry } from '../../types';
 
 const FALLBACK_SPECIALTIES = [
@@ -36,15 +37,6 @@ type Tab = 'schedule' | 'register' | 'appointments';
 export function SecretaryPanel({ user: _user }: SecretaryPanelProps) {
   const { data } = useApp();
   const [tab, setTab] = useState<Tab>('schedule');
-
-  const scheduledAppts = data.appointments
-    .filter((a) => a.status === 'scheduled')
-    .sort((a, b) => {
-      const da = a.scheduledDate || '';
-      const db = b.scheduledDate || '';
-      if (da !== db) return da.localeCompare(db);
-      return (a.scheduledTime || '').localeCompare(b.scheduledTime || '');
-    });
 
   return (
     <div className="min-h-[calc(100vh-140px)] px-4 py-5 max-w-md mx-auto">
@@ -85,7 +77,7 @@ export function SecretaryPanel({ user: _user }: SecretaryPanelProps) {
 
       {tab === 'schedule' && <ScheduleTab />}
       {tab === 'register' && <RegisterTab />}
-      {tab === 'appointments' && <AppointmentsListTab appointments={scheduledAppts} />}
+      {tab === 'appointments' && <AppointmentsHistoryTab appointments={data.appointments} />}
     </div>
   );
 }
@@ -1049,53 +1041,3 @@ function RegisterInlineForm({ onRegistered }: { onRegistered: (u: AppUser) => vo
   );
 }
 
-// ============================================================
-// Appointments list tab
-// ============================================================
-function AppointmentsListTab({ appointments }: { appointments: Appointment[] }) {
-  if (appointments.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 animate-slide-up text-center">
-        <Calendar className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-        <p className="text-slate-500 text-sm">No hay citas agendadas.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 animate-slide-up">
-      <h3 className="font-semibold text-slate-800 mb-3">
-        Citas agendadas ({appointments.length})
-      </h3>
-      <div className="space-y-2 max-h-96 overflow-y-auto">
-        {appointments.map((a) => (
-          <div
-            key={a.id}
-            className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
-          >
-            <div className="w-10 h-10 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center flex-shrink-0">
-              <Stethoscope className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800 truncate">{a.patientName}</p>
-              <p className="text-xs text-slate-400">
-                CC: {a.patientCedula} · Turno #{a.ticketNumber}
-              </p>
-              {a.reason && (
-                <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
-                  <FileText className="w-3 h-3" /> {a.reason}
-                </p>
-              )}
-            </div>
-            <div className="text-right flex-shrink-0">
-              <p className="text-sm font-semibold text-slate-700">{a.scheduledTime}</p>
-              {a.scheduledDate && (
-                <p className="text-xs text-slate-400">{a.scheduledDate}</p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
