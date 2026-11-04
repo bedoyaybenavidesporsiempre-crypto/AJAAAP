@@ -48,7 +48,7 @@ export function LoginScreen() {
       {/* Login form */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 animate-slide-up"
+        className="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6 border border-slate-100 animate-slide-up"
       >
         <h2 className="font-bold text-slate-800 mb-1">Iniciar Sesión</h2>
         <p className="text-sm text-slate-500 mb-4">
