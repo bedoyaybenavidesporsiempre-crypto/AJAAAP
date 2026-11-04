@@ -71,7 +71,7 @@ export function SedeSelector({ activeName, onSelect }: SedeSelectorProps) {
         <p className="text-xs text-red-600 mt-1.5">{error}</p>
       ) : (
         <p className="text-xs text-slate-400 mt-1.5">
-          Al elegir una sede, sus coordenadas se usan para el check-in y la distancia.
+          Al elegir una sede, sus coordenadas se usan para validar el check-in.
         </p>
       )}
     </div>

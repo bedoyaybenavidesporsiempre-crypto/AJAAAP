@@ -18,7 +18,6 @@ import {
 import { useApp } from '../../context/AppContext';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { CheckInZoneCard } from './CheckInZoneCard';
-import { SedeDistance } from './SedeDistance';
 import { useNow, formatCountdown } from '../../hooks/useNow';
 import { getCallRemainingSeconds } from '../../lib/callTimer';
 import { getOfficialTurn, getTurnsAhead } from '../../lib/queueTurns';
@@ -263,7 +262,6 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
                         {turnsAhead}
                       </span>
                     </div>
-                    <SedeDistance sede={data.sede} />
                   </>
                 )}
               </div>

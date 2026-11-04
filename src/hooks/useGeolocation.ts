@@ -30,8 +30,8 @@ export function useGeolocation(sedeLat: number, sedeLng: number, testMode: boole
           status: withinRange ? 'success' : 'too-far',
           distance: Math.round(distance),
           message: withinRange
-            ? `Estás a ${Math.round(distance)}m de la sede. Check-in autorizado.`
-            : `Estás a ${Math.round(distance)}m de la sede. Acércate a menos de ${CHECKIN_RADIUS_METERS}m para hacer check-in.`,
+            ? 'Ubicación verificada. Check-in autorizado.'
+            : 'Estás fuera de la zona del centro de atención. Acércate para hacer check-in.',
         };
         setResult(r);
         setLoading(false);
@@ -50,7 +50,7 @@ export function useGeolocation(sedeLat: number, sedeLng: number, testMode: boole
     const r: GeoResult = {
       status: 'simulated',
       distance: 75,
-      message: 'Ubicación simulada: a 75m de la sede. Check-in autorizado.',
+      message: 'Ubicación simulada cerca de la sede. Check-in autorizado.',
     };
     setResult(r);
   }, []);
