@@ -31,7 +31,7 @@ interface AppContextValue {
   loading: boolean;
   login: (cedula: string) => Promise<User | null>;
   logout: () => void;
-  checkIn: (cedula: string, name: string, gpsDistance: number, method?: 'gps' | 'code') => Promise<Appointment | null>;
+  checkIn: (cedula: string, name: string, gpsDistance: number, method?: 'gps' | 'code', appointmentId?: string) => Promise<Appointment | null>;
   getMyAppointment: (cedula: string) => Appointment | undefined;
   getMyScheduledAppointments: (cedula: string) => Appointment[];
   getQueuePosition: (cedula: string) => number;
@@ -514,7 +514,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(SESSION_KEY);
   };
 
-  const checkIn = async (cedula: string, name: string, gpsDistance: number, method: 'gps' | 'code' = 'gps'): Promise<Appointment | null> => {
+  const checkIn = async (cedula: string, name: string, gpsDistance: number, method: 'gps' | 'code' = 'gps', appointmentId?: string): Promise<Appointment | null> => {
     const { data: existing } = await supabase
       .from('appointments')
       .select('*')
@@ -522,8 +522,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .in('status', ['checked-in', 'scheduled', 'rescheduled']);
 
     const existingAppts = (existing as DbAppointment[] ?? []);
-    if (existingAppts.length > 0) {
-      const ex = existingAppts[0];
+    const ex = appointmentId
+      ? existingAppts.find((a) => a.id === appointmentId)
+      : existingAppts[0];
+    if (appointmentId && !ex) return null;
+    if (ex) {
       const { data: updated, error } = await supabase
         .from('appointments')
         .update({

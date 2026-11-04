@@ -14,7 +14,8 @@ import {
 import { useActiveCheckinCode } from '../../hooks/useCheckinCode';
 import { useApp } from '../../context/AppContext';
 import { useGeolocation } from '../../hooks/useGeolocation';
-import type { User as AppUser } from '../../types';
+import type { User as AppUser, Appointment } from '../../types';
+import { toLocalDateStr } from '../../lib/cutoff';
 
 interface CheckInByCodeProps {
   user: AppUser;
@@ -62,6 +63,8 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [scannerState, setScannerState] = useState<ScannerState>('idle');
+  const [choices, setChoices] = useState<Appointment[]>([]);
+  const [pendingToken, setPendingToken] = useState('');
 
   const scannerRef = useRef<ScannerInstance | null>(null);
   const handledRef = useRef(false);
@@ -73,9 +76,41 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
     return releaseScanner(scanner);
   };
 
+  const validateAppointmentTime = (apt: Appointment, todayStr: string): string | null => {
+    if (apt.scheduledDate !== todayStr) {
+      return `Tu cita es el ${apt.scheduledDate}. Solo puedes hacer check-in el día de tu cita.`;
+    }
+    const timeMatch = /^(\d{2}):(\d{2})$/.exec(apt.scheduledTime);
+    if (!timeMatch) return 'La hora de tu cita no es válida. Consulta en recepción.';
+    if (!data.sede.checkinTimeRestriction) return null;
+    const nowDate = new Date();
+    const scheduledAt = new Date(nowDate);
+    scheduledAt.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0);
+    if (scheduledAt.getTime() - nowDate.getTime() > 30 * 60 * 1000) {
+      return `El check-in se habilita 30 minutos antes de tu cita (${apt.scheduledTime}).`;
+    }
+    return null;
+  };
+
+  const checkInAppointment = async (apt: Appointment) => {
+    setBusy(true);
+    setError('');
+    const gpsDistance = result.distance ?? 0;
+    const checked = await checkIn(user.cedula, user.name, gpsDistance, 'code', apt.id);
+    setBusy(false);
+    if (checked) {
+      setChoices([]);
+      onCheckedIn();
+      return true;
+    }
+    setError('No se pudo registrar el check-in. Intenta de nuevo.');
+    return false;
+  };
+
   const processToken = async (token: string): Promise<boolean> => {
     setBusy(true);
     setError('');
+    setChoices([]);
 
     const valid = await isValid(token);
     if (!valid) {
@@ -84,43 +119,53 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
       return false;
     }
 
-    const nowDate = new Date();
-    const todayStr = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}-${String(nowDate.getDate()).padStart(2, '0')}`;
-    const todayAppt = data.appointments.find(
+    const candidates = data.appointments.filter(
       (a) =>
         a.patientCedula === user.cedula &&
-        a.scheduledDate === todayStr &&
         (a.status === 'scheduled' || a.status === 'rescheduled'),
     );
-    if (!todayAppt) {
-      setError('No tienes una cita agendada para hoy.');
+    if (candidates.length === 0) {
+      setError('No tienes una cita agendada.');
       setBusy(false);
       return false;
     }
-    const timeMatch = /^(\d{2}):(\d{2})$/.exec(todayAppt.scheduledTime);
-    if (!timeMatch) {
-      setError('La hora de tu cita no es válida. Consulta en recepción.');
+    if (candidates.length > 1) {
+      setPendingToken(token);
+      setChoices(candidates);
       setBusy(false);
-      return false;
-    }
-    const scheduledAt = new Date(nowDate);
-    scheduledAt.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0);
-    if (data.sede.checkinTimeRestriction && scheduledAt.getTime() - nowDate.getTime() > 30 * 60 * 1000) {
-      setError(`El check-in se habilita 30 minutos antes de tu cita (${todayAppt.scheduledTime}).`);
-      setBusy(false);
-      return false;
-    }
-
-    const gpsDistance = result.distance ?? 0;
-    const apt = await checkIn(user.cedula, user.name, gpsDistance, 'code');
-    setBusy(false);
-
-    if (apt) {
-      onCheckedIn();
       return true;
     }
-    setError('No se pudo registrar el check-in. Intenta de nuevo.');
-    return false;
+
+    const nowDate = new Date();
+    const todayStr = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}-${String(nowDate.getDate()).padStart(2, '0')}`;
+    const timeError = validateAppointmentTime(candidates[0], todayStr);
+    if (timeError) {
+      setError(timeError);
+      setBusy(false);
+      return false;
+    }
+    return checkInAppointment(candidates[0]);
+  };
+
+  const handleChoose = async (apt: Appointment) => {
+    setBusy(true);
+    setError('');
+    const valid = await isValid(pendingToken);
+    if (!valid) {
+      setChoices([]);
+      setError('El código no es válido o ya expiró. Revisa la pantalla en la sala de espera.');
+      setBusy(false);
+      return;
+    }
+    const nowDate = new Date();
+    const todayStr = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}-${String(nowDate.getDate()).padStart(2, '0')}`;
+    const timeError = validateAppointmentTime(apt, todayStr);
+    if (timeError) {
+      setError(timeError);
+      setBusy(false);
+      return;
+    }
+    await checkInAppointment(apt);
   };
 
   useEffect(() => {
@@ -181,6 +226,7 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
     setScannerState('idle');
     setError('');
     setInput('');
+    setChoices([]);
     setMode(next);
   };
 
@@ -238,6 +284,29 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
           Código QR
         </button>
       </div>
+
+      {choices.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-slate-700">Tienes varias citas. Elige a cuál quieres hacer check-in:</p>
+          {choices.map((apt) => {
+            const todayStr = toLocalDateStr(new Date());
+            const isToday = apt.scheduledDate === todayStr;
+            return (
+              <button
+                key={apt.id}
+                onClick={() => void handleChoose(apt)}
+                disabled={busy || !isToday}
+                className="w-full flex items-center justify-between rounded-xl border-2 border-slate-200 px-4 py-3 text-left hover:border-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="text-sm font-semibold text-slate-800">{apt.scheduledTime}</span>
+                <span className="text-xs text-slate-500">
+                  {isToday ? 'Hoy' : `Solo disponible el ${apt.scheduledDate}`}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {mode === 'pin' ? (
         <form onSubmit={handlePinSubmit} className="space-y-3">
