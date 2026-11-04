@@ -84,6 +84,33 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
       return false;
     }
 
+    const nowDate = new Date();
+    const todayStr = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}-${String(nowDate.getDate()).padStart(2, '0')}`;
+    const todayAppt = data.appointments.find(
+      (a) =>
+        a.patientCedula === user.cedula &&
+        a.scheduledDate === todayStr &&
+        (a.status === 'scheduled' || a.status === 'rescheduled'),
+    );
+    if (!todayAppt) {
+      setError('No tienes una cita agendada para hoy.');
+      setBusy(false);
+      return false;
+    }
+    const timeMatch = /^(\d{2}):(\d{2})$/.exec(todayAppt.scheduledTime);
+    if (!timeMatch) {
+      setError('La hora de tu cita no es válida. Consulta en recepción.');
+      setBusy(false);
+      return false;
+    }
+    const scheduledAt = new Date(nowDate);
+    scheduledAt.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0);
+    if (scheduledAt.getTime() - nowDate.getTime() > 30 * 60 * 1000) {
+      setError(`El check-in se habilita 30 minutos antes de tu cita (${todayAppt.scheduledTime}).`);
+      setBusy(false);
+      return false;
+    }
+
     const gpsDistance = result.distance ?? 0;
     const apt = await checkIn(user.cedula, user.name, gpsDistance, 'code');
     setBusy(false);

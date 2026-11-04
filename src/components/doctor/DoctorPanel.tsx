@@ -112,7 +112,12 @@ export function DoctorPanel({ user }: DoctorPanelProps) {
         (a.status === 'checked-in' || a.status === 'rescheduled') &&
         (a.scheduledDate === todayStr || a.scheduledDate === undefined || a.scheduledDate === null),
     )
-    .sort((a, b) => a.ticketNumber - b.ticketNumber);
+    .sort((a, b) => {
+      const ta = a.scheduledTime && a.scheduledTime !== '--:--' ? a.scheduledTime : '99:99';
+      const tb = b.scheduledTime && b.scheduledTime !== '--:--' ? b.scheduledTime : '99:99';
+      if (ta !== tb) return ta.localeCompare(tb);
+      return a.ticketNumber - b.ticketNumber;
+    });
 
   const calledPatient = myAppointments.find((a) => a.status === 'called');
   const inAttendance = myAppointments.find((a) => a.status === 'in-attendance');
