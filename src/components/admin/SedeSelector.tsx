@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MapPin } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import type { SedeConfig } from '@/types';
+import { supabase } from '../../lib/supabase';
+import type { SedeConfig } from '../../types';
 
 interface SedeOption {
   id: string;

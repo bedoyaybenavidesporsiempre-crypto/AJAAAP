@@ -11,11 +11,11 @@ import {
   Timer,
   AlertCircle,
 } from 'lucide-react';
-import { useApp } from '@/context/AppContext';
-import { useNotificationSound } from '@/hooks/useSound';
-import { useNow, formatCountdown } from '@/hooks/useNow';
-import { COUNTDOWN_SECONDS } from '@/types';
-import type { User as AppUser, Appointment } from '@/types';
+import { useApp } from './context/AppContext';
+import { useNotificationSound } from './hooks/useSound';
+import { useNow, formatCountdown } from './hooks/useNow';
+import { COUNTDOWN_SECONDS } from './types';
+import type { User as AppUser, Appointment } from './types';
 
 interface WaitingScreenProps {
   user: AppUser;

@@ -6,11 +6,11 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { AppData, User, SedeConfig, Appointment, DoctorAvailability, DoctorScheduleEntry, DisabledTimeSlot, DoctorNotification, Specialty, DoctorDisabledDay } from '@/types';
-import { COUNTDOWN_SECONDS } from '@/types';
-import { supabase } from '@/lib/supabase';
-import { DEFAULT_SEDE } from '@/data/mockData';
-import { CALL_WINDOW_MS } from '@/lib/callTimer';
+import type { AppData, User, SedeConfig, Appointment, DoctorAvailability, DoctorScheduleEntry, DisabledTimeSlot, DoctorNotification, Specialty, DoctorDisabledDay } from '../types';
+import { COUNTDOWN_SECONDS } from '../types';
+import { supabase } from '../lib/supabase';
+import { DEFAULT_SEDE } from '../data/mockData';
+import { CALL_WINDOW_MS } from '../lib/callTimer';
 
 const SESSION_KEY = 'aja-app-session-cedula';
 

@@ -24,15 +24,15 @@ import {
   X,
   CalendarClock,
 } from 'lucide-react';
-import { useApp } from '@/context/AppContext';
-import { useNow, formatCountdown } from '@/hooks/useNow';
-import { COUNTDOWN_SECONDS } from '@/types';
-import { getCallRemainingSeconds } from '@/lib/callTimer';
-import { isPastCutoff } from '@/lib/cutoff';
-import type { User as AppUser, Appointment } from '@/types';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { TabStrip } from '@/components/TabStrip';
-import { PatientDistanceNotice } from '@/components/doctor/PatientDistanceNotice';
+import { useApp } from '../../context/AppContext';
+import { useNow, formatCountdown } from '../../hooks/useNow';
+import { COUNTDOWN_SECONDS } from '../../types';
+import { getCallRemainingSeconds } from '../../lib/callTimer';
+import { isPastCutoff } from '../../lib/cutoff';
+import type { User as AppUser, Appointment } from '../../types';
+import { ErrorBoundary } from '../ErrorBoundary';
+import { TabStrip } from '../TabStrip';
+import { PatientDistanceNotice } from './PatientDistanceNotice';
 
 interface DoctorPanelProps {
   user: AppUser;
@@ -793,8 +793,8 @@ interface AvailabilityCalendarSectionProps {
   doctorName: string;
   specialty: string;
   loading: boolean;
-  appointments: import('@/types').Appointment[];
-  getSchedule: (cedula: string) => import('@/types').DoctorScheduleEntry[];
+  appointments: import('../../types').Appointment[];
+  getSchedule: (cedula: string) => import('../../types').DoctorScheduleEntry[];
   onToggleDay: (doctorCedula: string, date: string) => Promise<void>;
   ensureWeekdaysScheduled: (doctorCedula: string, monthsAhead?: number) => Promise<void>;
 }

@@ -16,9 +16,9 @@ import {
   ChevronRight,
   FileText,
 } from 'lucide-react';
-import { useApp } from '@/context/AppContext';
-import { TabStrip } from '@/components/TabStrip';
-import type { User as AppUser, Appointment, DoctorScheduleEntry } from '@/types';
+import { useApp } from '../../context/AppContext';
+import { TabStrip } from '../TabStrip';
+import type { User as AppUser, Appointment, DoctorScheduleEntry } from '../../types';
 
 const FALLBACK_SPECIALTIES = [
   'Médico General',

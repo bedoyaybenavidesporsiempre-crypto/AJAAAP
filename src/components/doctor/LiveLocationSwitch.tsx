@@ -1,6 +1,6 @@
 import { MapPin } from 'lucide-react';
-import { useApp } from '@/context/AppContext';
-import { useLiveLocationSharing } from '@/hooks/useLiveLocationSharing';
+import { useApp } from '../../context/AppContext';
+import { useLiveLocationSharing } from '../../hooks/useLiveLocationSharing';
 
 interface LiveLocationSwitchProps {
   doctorCedula: string;

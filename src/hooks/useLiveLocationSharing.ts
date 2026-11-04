@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
-import { TEST_FALLBACK_POSITION, describeGeolocationError } from '@/lib/geolocation';
+import { supabase } from '../lib/supabase';
+import { TEST_FALLBACK_POSITION, describeGeolocationError } from '../lib/geolocation';
 
 const HEARTBEAT_MS = 15000;
 

@@ -1,6 +1,6 @@
-import { useDoctorLiveLocation } from '@/hooks/useDoctorLiveLocation';
-import { useOwnPosition } from '@/hooks/useOwnPosition';
-import { calculateDistance, formatDistance } from '@/lib/distance';
+import { useDoctorLiveLocation } from '../../hooks/useDoctorLiveLocation';
+import { useOwnPosition } from '../../hooks/useOwnPosition';
+import { calculateDistance, formatDistance } from '../../lib/distance';
 
 interface DoctorLiveDistanceProps {
   doctorCedula: string | undefined;

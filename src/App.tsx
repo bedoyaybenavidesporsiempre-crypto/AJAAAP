@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef, Component, type ReactNode } from 'react';
 import { LogOut, ArrowRight, AlertCircle, RefreshCw, MessageCircle, X } from 'lucide-react';
-import { AppLogoMark } from '@/components/FastyTurnLogo';
-import { AppProvider, useApp } from '@/context/AppContext';
-import { LoginScreen } from '@/components/LoginScreen';
-import { MyAppointments } from '@/components/patient/MyAppointments';
-import { DoctorPanel } from '@/components/doctor/DoctorPanel';
-import { AdminPanel } from '@/components/admin/AdminPanel';
-import { SecretaryPanel } from '@/components/secretary/SecretaryPanel';
-import { TvScreen } from '@/components/tv/TvScreen';
-import { TvCodesScreen } from '@/components/tv/TvCodesScreen';
-import { UpdateBanner } from '@/components/UpdateBanner';
-import { InteractiveBackground } from '@/components/InteractiveBackground';
-import type { Role } from '@/types';
+import { AppLogoMark } from './components/FastyTurnLogo';
+import { AppProvider, useApp } from './context/AppContext';
+import { LoginScreen } from './components/LoginScreen';
+import { MyAppointments } from './components/patient/MyAppointments';
+import { DoctorPanel } from './components/doctor/DoctorPanel';
+import { AdminPanel } from './components/admin/AdminPanel';
+import { SecretaryPanel } from './components/secretary/SecretaryPanel';
+import { TvScreen } from './components/tv/TvScreen';
+import { TvCodesScreen } from './components/tv/TvCodesScreen';
+import { UpdateBanner } from './components/UpdateBanner';
+import { InteractiveBackground } from './components/InteractiveBackground';
+import type { Role } from './types';
 
 function useRoute(): 'pantalla' | 'tv-codes' | null {
   const [route, setRoute] = useState<'pantalla' | 'tv-codes' | null>(null);

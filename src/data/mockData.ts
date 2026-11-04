@@ -1,4 +1,4 @@
-import type { AppData, SedeConfig } from '@/types';
+import type { AppData, SedeConfig } from '../types';
 
 export const DEFAULT_SEDE: SedeConfig = {
   name: 'Batallón de Infantería N.5 Córdova - Santa Marta',

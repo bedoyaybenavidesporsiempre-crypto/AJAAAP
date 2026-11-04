@@ -15,16 +15,16 @@ import {
   Timer,
   DoorClosed,
 } from 'lucide-react';
-import { useApp } from '@/context/AppContext';
-import { useGeolocation } from '@/hooks/useGeolocation';
-import { CheckInZoneCard } from '@/components/patient/CheckInZoneCard';
-import { SedeDistance } from '@/components/patient/SedeDistance';
-import { useNow, formatCountdown } from '@/hooks/useNow';
-import { getCallRemainingSeconds } from '@/lib/callTimer';
-import { CheckInByCode } from '@/components/patient/CheckInByCode';
-import { useCheckinActive } from '@/hooks/useCheckinActive';
-import { isPastCutoff } from '@/lib/cutoff';
-import type { User as AppUser, Appointment } from '@/types';
+import { useApp } from '../../context/AppContext';
+import { useGeolocation } from '../../hooks/useGeolocation';
+import { CheckInZoneCard } from './CheckInZoneCard';
+import { SedeDistance } from './SedeDistance';
+import { useNow, formatCountdown } from '../../hooks/useNow';
+import { getCallRemainingSeconds } from '../../lib/callTimer';
+import { CheckInByCode } from './CheckInByCode';
+import { useCheckinActive } from '../../hooks/useCheckinActive';
+import { isPastCutoff } from '../../lib/cutoff';
+import type { User as AppUser, Appointment } from '../../types';
 
 interface MyAppointmentsProps {
   user: AppUser;
@@ -385,7 +385,7 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
 // ============================================================
 interface AppointmentDetailCardProps {
   apt: Appointment;
-  users: import('@/types').User[];
+  users: import('../../types').User[];
 }
 
 function AppointmentDetailCard({ apt, users }: AppointmentDetailCardProps) {

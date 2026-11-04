@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { User, CreditCard, Navigation, Loader2, CheckCircle2, AlertTriangle, Stethoscope, MapPin } from 'lucide-react';
-import { useGeolocation } from '@/hooks/useGeolocation';
-import { useApp } from '@/context/AppContext';
-import { CheckInZoneCard } from '@/components/patient/CheckInZoneCard';
-import type { User as AppUser } from '@/types';
+import { useGeolocation } from '../../hooks/useGeolocation';
+import { useApp } from '../../context/AppContext';
+import { CheckInZoneCard } from './CheckInZoneCard';
+import type { User as AppUser } from '../../types';
 
 interface CheckInScreenProps {
   user: AppUser;

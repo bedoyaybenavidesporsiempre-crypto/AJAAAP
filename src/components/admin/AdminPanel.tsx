@@ -21,11 +21,11 @@ import {
   Search,
   FlaskConical,
 } from 'lucide-react';
-import { useApp } from '@/context/AppContext';
-import { SedeSelector } from '@/components/admin/SedeSelector';
-import { TestModeTab } from '@/components/admin/TestModeTab';
-import { TabStrip } from '@/components/TabStrip';
-import type { Role, User as AppUser, SedeConfig } from '@/types';
+import { useApp } from '../../context/AppContext';
+import { SedeSelector } from './SedeSelector';
+import { TestModeTab } from './TestModeTab';
+import { TabStrip } from '../TabStrip';
+import type { Role, User as AppUser, SedeConfig } from '../../types';
 
 const DEFAULT_SPECIALTIES = [
   'Médico General',

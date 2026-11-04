@@ -1,9 +1,9 @@
 import { MapPin, Navigation } from 'lucide-react';
-import type { SedeConfig } from '@/types';
-import { CHECKIN_RADIUS_METERS } from '@/hooks/useGeolocation';
-import { useOwnPosition } from '@/hooks/useOwnPosition';
-import { usePatientLocationPublishing } from '@/hooks/usePatientLiveLocation';
-import { calculateDistance, formatDistance } from '@/lib/distance';
+import type { SedeConfig } from '../../types';
+import { CHECKIN_RADIUS_METERS } from '../../hooks/useGeolocation';
+import { useOwnPosition } from '../../hooks/useOwnPosition';
+import { usePatientLocationPublishing } from '../../hooks/usePatientLiveLocation';
+import { calculateDistance, formatDistance } from '../../lib/distance';
 
 interface CheckInZoneCardProps {
   sede: SedeConfig;

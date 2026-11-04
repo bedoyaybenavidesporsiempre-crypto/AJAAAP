@@ -1,8 +1,8 @@
 import { Radio, MapPin } from 'lucide-react';
-import type { SedeConfig } from '@/types';
-import { usePatientLiveLocation } from '@/hooks/usePatientLiveLocation';
-import { useOwnPosition } from '@/hooks/useOwnPosition';
-import { calculateDistance, formatDistance } from '@/lib/distance';
+import type { SedeConfig } from '../../types';
+import { usePatientLiveLocation } from '../../hooks/usePatientLiveLocation';
+import { useOwnPosition } from '../../hooks/useOwnPosition';
+import { calculateDistance, formatDistance } from '../../lib/distance';
 
 interface PatientDistanceNoticeProps {
   patientCedula: string;

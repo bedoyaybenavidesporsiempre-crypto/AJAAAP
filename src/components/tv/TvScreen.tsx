@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Tv, Clock, Hash, Users, RefreshCw, DoorClosed } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { useCheckinCode } from '@/hooks/useCheckinCode';
-import { useCheckinActive } from '@/hooks/useCheckinActive';
-import { AppLogoMark } from '@/components/FastyTurnLogo';
-import type { Appointment } from '@/types';
+import { supabase } from '../../lib/supabase';
+import { useCheckinCode } from '../../hooks/useCheckinCode';
+import { useCheckinActive } from '../../hooks/useCheckinActive';
+import { AppLogoMark } from '../FastyTurnLogo';
+import type { Appointment } from '../../types';
 
 interface DbAppointment {
   id: string;

@@ -1,4 +1,4 @@
-import { COUNTDOWN_SECONDS } from '@/types';
+import { COUNTDOWN_SECONDS } from '../types';
 
 export const CALL_WINDOW_MS = COUNTDOWN_SECONDS * 1000;
 

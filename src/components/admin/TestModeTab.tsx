@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FlaskConical, Loader2, MapPin, QrCode, Power } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { DEFAULT_SEDE } from '@/data/mockData';
-import type { CheckinMethod } from '@/types';
+import { supabase } from '../../lib/supabase';
+import { DEFAULT_SEDE } from '../../data/mockData';
+import type { CheckinMethod } from '../../types';
 
 interface SedeConfigRow {
   id: number;

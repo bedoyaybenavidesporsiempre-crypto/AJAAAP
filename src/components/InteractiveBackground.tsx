@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import particleSvg from '@/assets/aja_particles.svg';
+import particleSvg from '../assets/aja_particles.svg';
 
 type Particle = {
   x: number;

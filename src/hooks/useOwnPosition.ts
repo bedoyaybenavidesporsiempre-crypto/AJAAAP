@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { type GeoPosition, TEST_FALLBACK_POSITION, describeGeolocationError, isPositionPrecise, toGeoPosition } from '@/lib/geolocation';
+import { type GeoPosition, TEST_FALLBACK_POSITION, describeGeolocationError, isPositionPrecise, toGeoPosition } from '../lib/geolocation';
 
 const HIGH_ACCURACY_OPTIONS: PositionOptions = {
   enableHighAccuracy: true,

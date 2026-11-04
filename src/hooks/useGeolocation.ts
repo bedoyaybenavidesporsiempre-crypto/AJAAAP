@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { calculateDistance, isWithinGeofence } from '@/lib/distance';
-import { readPosition } from '@/lib/geolocation';
+import { calculateDistance, isWithinGeofence } from '../lib/distance';
+import { readPosition } from '../lib/geolocation';
 
 export type GeoStatus = 'idle' | 'checking' | 'success' | 'too-far' | 'error' | 'simulated';
 

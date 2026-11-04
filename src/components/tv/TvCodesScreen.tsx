@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Lock, Hash, Clock, Maximize2, LogOut, Loader2, AlertTriangle, DoorClosed } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { useCheckinActive } from '@/hooks/useCheckinActive';
-import { AppLogoMark } from '@/components/FastyTurnLogo';
+import { supabase } from '../../lib/supabase';
+import { useCheckinActive } from '../../hooks/useCheckinActive';
+import { AppLogoMark } from '../FastyTurnLogo';
 
 const ACCESS_CODE = '05062023';
 const STORAGE_KEY = 'tv-codes-auth';

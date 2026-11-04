@@ -1,7 +1,7 @@
 import { MapPin } from 'lucide-react';
-import type { SedeConfig } from '@/types';
-import { useOwnPosition } from '@/hooks/useOwnPosition';
-import { calculateDistance, formatDistance } from '@/lib/distance';
+import type { SedeConfig } from '../../types';
+import { useOwnPosition } from '../../hooks/useOwnPosition';
+import { calculateDistance, formatDistance } from '../../lib/distance';
 
 interface SedeDistanceProps {
   sede: SedeConfig;

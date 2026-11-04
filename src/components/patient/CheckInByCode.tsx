@@ -11,10 +11,10 @@ import {
   CameraOff,
   RefreshCw,
 } from 'lucide-react';
-import { useActiveCheckinCode } from '@/hooks/useCheckinCode';
-import { useApp } from '@/context/AppContext';
-import { useGeolocation } from '@/hooks/useGeolocation';
-import type { User as AppUser } from '@/types';
+import { useActiveCheckinCode } from '../../hooks/useCheckinCode';
+import { useApp } from '../../context/AppContext';
+import { useGeolocation } from '../../hooks/useGeolocation';
+import type { User as AppUser } from '../../types';
 
 interface CheckInByCodeProps {
   user: AppUser;

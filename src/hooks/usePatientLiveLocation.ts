@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import type { GeoPosition } from '@/lib/geolocation';
-import { ACCURACY_THRESHOLD_METERS } from '@/lib/geolocation';
+import { supabase } from '../lib/supabase';
+import type { GeoPosition } from '../lib/geolocation';
+import { ACCURACY_THRESHOLD_METERS } from '../lib/geolocation';
 
 export interface PatientLiveLocation {
   lat: number;
