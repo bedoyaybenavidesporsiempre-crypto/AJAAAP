@@ -37,6 +37,7 @@ interface AppContextValue {
   getQueuePosition: (cedula: string) => number;
   getEstimatedWait: (cedula: string) => number;
   callNext: () => Promise<void>;
+  finishAttendance: () => Promise<void>;
   markPresent: (calledId: string) => Promise<void>;
   markAbsentAndReschedule: (calledId: string) => Promise<void>;
   updateSede: (sede: Partial<SedeConfig>) => Promise<void>;
@@ -622,30 +623,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!next) return;
 
     const now = Date.now();
-    let attendedCount = 0;
-    let totalConsultationMinutes = 0;
-
-    const { data: queueRow } = await supabase
-      .from('queue_state')
-      .select('*')
-      .eq('id', 1)
-      .maybeSingle();
-    const qs = queueRow as DbQueueState | null;
-    attendedCount = qs?.attended_count ?? 0;
-    totalConsultationMinutes = qs?.total_consultation_minutes ?? 0;
-
-    const currentInAttendance = all.find((a) => a.status === 'in-attendance');
-    if (currentInAttendance) {
-      const durationMin = Math.round(
-        (now - (currentInAttendance.attendance_start_at ?? now)) / 60000,
-      );
-      totalConsultationMinutes += durationMin;
-      attendedCount += 1;
-      await supabase
-        .from('appointments')
-        .update({ status: 'attended', attendance_end_at: now })
-        .eq('id', currentInAttendance.id);
-    }
 
     await supabase
       .from('appointments')
@@ -657,8 +634,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .update({
         current_called_id: next.id,
         countdown_ends_at: now + COUNTDOWN_SECONDS * 1000,
-        attended_count: attendedCount,
-        total_consultation_minutes: totalConsultationMinutes,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', 1);
+
+    await loadData();
+  };
+
+  const finishAttendance = async () => {
+    const activeUser = currentUserRef.current;
+    const doctorCedula = activeUser?.role === 'doctor' ? activeUser.cedula : null;
+
+    let query = supabase.from('appointments').select('*').eq('status', 'in-attendance');
+    if (doctorCedula) {
+      query = query.eq('doctor_id', doctorCedula);
+    }
+    const { data: appts } = await query;
+    const current = (appts as DbAppointment[] ?? [])[0];
+    if (!current) return;
+
+    const now = Date.now();
+    const durationMin = Math.round((now - (current.attendance_start_at ?? now)) / 60000);
+
+    const { data: queueRow } = await supabase
+      .from('queue_state')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle();
+    const qs = queueRow as DbQueueState | null;
+
+    await supabase
+      .from('appointments')
+      .update({ status: 'attended', attendance_end_at: now })
+      .eq('id', current.id);
+
+    await supabase
+      .from('queue_state')
+      .update({
+        attended_count: (qs?.attended_count ?? 0) + 1,
+        total_consultation_minutes: (qs?.total_consultation_minutes ?? 0) + durationMin,
         updated_at: new Date().toISOString(),
       })
       .eq('id', 1);
@@ -1186,6 +1200,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         getQueuePosition,
         getEstimatedWait,
         callNext,
+        finishAttendance,
         markPresent,
         markAbsentAndReschedule,
         updateSede,

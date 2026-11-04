@@ -75,7 +75,7 @@ const AFTERNOON_SLOTS = generate30MinSlots('14:00', '17:00');
 const ALL_SLOTS = [...MORNING_SLOTS, ...AFTERNOON_SLOTS];
 
 export function DoctorPanel({ user }: DoctorPanelProps) {
-  const { data, callNext, markPresent, markAbsentAndReschedule, getDoctorSchedule, toggleScheduleDay, ensureWeekdaysScheduled, loading, getNotifications, getUnreadNotificationCount, markNotificationsRead } = useApp();
+  const { data, callNext, finishAttendance, markPresent, markAbsentAndReschedule, getDoctorSchedule, toggleScheduleDay, ensureWeekdaysScheduled, loading, getNotifications, getUnreadNotificationCount, markNotificationsRead } = useApp();
   const now = useNow(1000);
   const pastCutoff = isPastCutoff(new Date(now));
   const [busy, setBusy] = useState(false);
@@ -86,6 +86,12 @@ export function DoctorPanel({ user }: DoctorPanelProps) {
   const handleCallNext = async () => {
     setBusy(true);
     await callNext();
+    setBusy(false);
+  };
+
+  const handleFinish = async () => {
+    setBusy(true);
+    await finishAttendance();
     setBusy(false);
   };
 
@@ -382,22 +388,37 @@ export function DoctorPanel({ user }: DoctorPanelProps) {
         </div>
       )}
 
-      {/* Call next button — only when no countdown active and before 6:30 PM */}
-      {!calledPatient && !pastCutoff && (
+      {/* Finish current consultation */}
+      {inAttendance && (
         <button
-          onClick={handleCallNext}
-          disabled={waitingPatients.length === 0 || busy}
-          className="w-full bg-emerald-500 text-white font-bold py-4 rounded-2xl
-                     hover:bg-emerald-600 active:scale-[0.98] transition-all
+          onClick={handleFinish}
+          disabled={busy}
+          className="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl
+                     hover:bg-emerald-700 active:scale-[0.98] transition-all
                      disabled:opacity-40 disabled:cursor-not-allowed
                      flex items-center justify-center gap-2.5 shadow-md shadow-emerald-200 mb-4"
         >
-          <UserCheck className="w-6 h-6" />
-          {inAttendance ? 'Finalizar y Llamar Siguiente' : 'Llamar Siguiente Paciente'}
+          <CheckCircle2 className="w-6 h-6" />
+          Finalizar cita
         </button>
       )}
 
-      {/* Appointment list — hidden after 6:30 PM */}
+      {/* Call next patient — only when no countdown or consultation is active and before 5:00 PM */}
+      {!calledPatient && !inAttendance && !pastCutoff && (
+        <button
+          onClick={handleCallNext}
+          disabled={waitingPatients.length === 0 || busy}
+          className="w-full bg-blue-700 text-white font-bold py-4 rounded-2xl
+                     hover:bg-blue-800 active:scale-[0.98] transition-all
+                     disabled:opacity-40 disabled:cursor-not-allowed
+                     flex items-center justify-center gap-2.5 shadow-md shadow-blue-200 mb-4"
+        >
+          <UserCheck className="w-6 h-6" />
+          Llamar al siguiente paciente
+        </button>
+      )}
+
+      {/* Appointment list — hidden after 5:00 PM */}
       {!pastCutoff && (
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3">

@@ -23,7 +23,7 @@ import { useNow, formatCountdown } from '../../hooks/useNow';
 import { getCallRemainingSeconds } from '../../lib/callTimer';
 import { CheckInByCode } from './CheckInByCode';
 import { useCheckinActive } from '../../hooks/useCheckinActive';
-import { isPastCutoff } from '../../lib/cutoff';
+import { toLocalDateStr } from '../../lib/cutoff';
 import type { User as AppUser, Appointment } from '../../types';
 
 interface MyAppointmentsProps {
@@ -79,8 +79,13 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
 
   // If patient has already checked in, show waiting screen content inline
   const hasCheckedIn = activeAppt && (activeAppt.status === 'checked-in' || activeAppt.status === 'called' || activeAppt.status === 'in-attendance' || activeAppt.status === 'rescheduled');
-  const pastCutoff = isPastCutoff(new Date(now));
-  const unattendedAfterCutoff = pastCutoff && activeAppt && (activeAppt.status === 'checked-in' || activeAppt.status === 'rescheduled');
+  const missedToday = data.appointments.find(
+    (a) =>
+      a.patientCedula === user.cedula &&
+      a.status === 'absent' &&
+      a.scheduledDate === toLocalDateStr(new Date(now)),
+  );
+  const unattendedAfterCutoff = !!missedToday;
 
   const myDoctorCedula = activeAppt?.doctorCedula ?? doctorCedula;
   const currentCall = myDoctorCedula
@@ -116,8 +121,8 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-6 h-6 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold">Tu cita no alcanzó a ser atendida hoy.</p>
-              <p className="text-sm mt-1">Por favor, comunícate con la secretaria para reagendarla.</p>
+              <p className="font-semibold">Tu cita no pudo ser atendida a tiempo.</p>
+              <p className="text-sm mt-1">Por favor, contacta a secretaría para reagendar.</p>
             </div>
           </div>
         </div>
