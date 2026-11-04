@@ -45,6 +45,7 @@ interface AppContextValue {
   setWeekendBooking: (enabled: boolean) => Promise<void>;
   setCheckinMethod: (method: 'gps' | 'code') => Promise<void>;
   setCheckinActive: (active: boolean) => Promise<void>;
+  setCheckinTimeRestriction: (enabled: boolean) => Promise<void>;
   addUser: (user: User) => Promise<void>;
   removeUser: (cedula: string) => Promise<boolean>;
   scheduleAppointment: (params: ScheduleAppointmentParams) => Promise<{ appointment: Appointment | null; error: string | null }>;
@@ -109,6 +110,7 @@ interface DbSedeConfig {
   allow_weekend_booking: boolean;
   checkin_method: string;
   is_active: boolean;
+  checkin_time_restriction: boolean;
 }
 
 interface DbDoctorAvailability {
@@ -313,6 +315,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         allowWeekendBooking: s.allow_weekend_booking,
         checkinMethod: (s.checkin_method === 'code' ? 'code' : 'gps'),
         isActive: s.is_active !== false,
+        checkinTimeRestriction: s.checkin_time_restriction !== false,
       };
     }
 
@@ -745,6 +748,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (sede.allowWeekendBooking !== undefined) update.allow_weekend_booking = sede.allowWeekendBooking;
     if (sede.checkinMethod !== undefined) update.checkin_method = sede.checkinMethod;
     if (sede.isActive !== undefined) update.is_active = sede.isActive;
+    if (sede.checkinTimeRestriction !== undefined) update.checkin_time_restriction = sede.checkinTimeRestriction;
     update.updated_at = new Date().toISOString();
 
     const { error } = await supabase.from('sede_config').update(update).eq('id', 1);
@@ -776,6 +780,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setCheckinActive = async (active: boolean) => {
     await updateSede({ isActive: active });
+  };
+
+  const setCheckinTimeRestriction = async (enabled: boolean) => {
+    await updateSede({ checkinTimeRestriction: enabled });
   };
 
   const addUser = async (user: User) => {
@@ -1208,6 +1216,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setWeekendBooking,
         setCheckinMethod,
         setCheckinActive,
+        setCheckinTimeRestriction,
         addUser,
         removeUser,
         scheduleAppointment,

@@ -51,7 +51,7 @@ interface TestSwitchProps {
   description: string;
   statusOn: string;
   statusOff: string;
-  field: 'same_day_booking' | 'allow_weekend_booking';
+  field: 'same_day_booking' | 'allow_weekend_booking' | 'checkin_time_restriction';
 }
 
 function TestSwitch({ title, description, statusOn, statusOff, field }: TestSwitchProps) {
@@ -62,10 +62,10 @@ function TestSwitch({ title, description, statusOn, statusOff, field }: TestSwit
   const refresh = useCallback(async () => {
     const { data } = await supabase
       .from('sede_config')
-      .select('same_day_booking, allow_weekend_booking')
+      .select('same_day_booking, allow_weekend_booking, checkin_time_restriction')
       .eq('id', 1)
       .maybeSingle();
-    const row = data as { same_day_booking: boolean; allow_weekend_booking: boolean } | null;
+    const row = data as { same_day_booking: boolean; allow_weekend_booking: boolean; checkin_time_restriction: boolean } | null;
     setEnabled(row ? row[field] : false);
     setLoaded(true);
   }, [field]);
@@ -86,7 +86,7 @@ function TestSwitch({ title, description, statusOn, statusOff, field }: TestSwit
         .from('sede_config')
         .update({ [field]: next, updated_at: new Date().toISOString() })
         .eq('id', 1)
-        .select('same_day_booking, allow_weekend_booking')
+        .select('same_day_booking, allow_weekend_booking, checkin_time_restriction')
         .maybeSingle();
 
       if (error || !data) {
@@ -94,7 +94,7 @@ function TestSwitch({ title, description, statusOn, statusOff, field }: TestSwit
         return;
       }
 
-      const row = data as { same_day_booking: boolean; allow_weekend_booking: boolean };
+      const row = data as { same_day_booking: boolean; allow_weekend_booking: boolean; checkin_time_restriction: boolean };
       setEnabled(row[field]);
     } catch {
       setEnabled(!next);
@@ -337,6 +337,13 @@ export function TestModeTab() {
       </h3>
       <CheckinActiveSwitch />
       <CheckinMethodSelector />
+      <TestSwitch
+        title="Restricción 30 min para Check-in"
+        description="Exige que el paciente haga check-in máximo 30 minutos antes de su cita. Desactívalo para probar a cualquier hora."
+        statusOn="Activo: el check-in solo se permite desde 30 minutos antes de la cita."
+        statusOff="Inactivo: el check-in se permite a cualquier hora del día (solo se exige cita de hoy)."
+        field="checkin_time_restriction"
+      />
       <TestSwitch
         title="Agendar citas para hoy"
         description="Desactiva temporalmente la regla de un día de anticipación para demostraciones en vivo."

@@ -50,6 +50,7 @@ export interface SedeConfig {
   allowWeekendBooking: boolean;
   checkinMethod: CheckinMethod;
   isActive: boolean;
+  checkinTimeRestriction: boolean;
 }
 
 export interface DoctorScheduleEntry {

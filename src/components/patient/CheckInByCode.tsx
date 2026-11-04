@@ -105,7 +105,7 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
     }
     const scheduledAt = new Date(nowDate);
     scheduledAt.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0);
-    if (scheduledAt.getTime() - nowDate.getTime() > 30 * 60 * 1000) {
+    if (data.sede.checkinTimeRestriction && scheduledAt.getTime() - nowDate.getTime() > 30 * 60 * 1000) {
       setError(`El check-in se habilita 30 minutos antes de tu cita (${todayAppt.scheduledTime}).`);
       setBusy(false);
       return false;
