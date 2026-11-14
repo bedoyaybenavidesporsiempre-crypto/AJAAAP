@@ -639,11 +639,11 @@ function CheckInMethods(props: CheckInMethodsProps) {
       )}
 
       {methodTab === 'pin' && (
-        <CheckInByCode key="pin" user={user} onCheckedIn={onCheckedIn} />
+        <CheckInByCode key="pin" user={user} onCheckedIn={onCheckedIn} mode="pin" />
       )}
 
       {methodTab === 'qr' && (
-        <CheckInByCode key="qr" user={user} onCheckedIn={onCheckedIn} />
+        <CheckInByCode key="qr" user={user} onCheckedIn={onCheckedIn} mode="qr" />
       )}
     </div>
   );

@@ -30,8 +30,8 @@ export function useGeolocation(sedeLat: number, sedeLng: number, testMode: boole
           status: withinRange ? 'success' : 'too-far',
           distance: Math.round(distance),
           message: withinRange
-            ? 'Ubicación verificada. Check-in autorizado.'
-            : 'Estás fuera de la zona del centro de atención. Acércate para hacer check-in.',
+            ? 'Ubicación verificada. Estás dentro del rango permitido. Check-in autorizado.'
+            : 'Estás fuera del rango permitido. Acércate al centro de atención para hacer check-in.',
         };
         setResult(r);
         setLoading(false);

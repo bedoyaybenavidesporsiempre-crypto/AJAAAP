@@ -20,9 +20,9 @@ import { toLocalDateStr } from '../../lib/cutoff';
 interface CheckInByCodeProps {
   user: AppUser;
   onCheckedIn: () => void;
+  mode: 'pin' | 'qr';
 }
 
-type CheckinMode = 'pin' | 'qr';
 type ScannerState = 'idle' | 'starting' | 'scanning' | 'error' | 'denied';
 
 const SCANNER_ELEMENT_ID = 'checkin-qr-reader';
@@ -53,12 +53,11 @@ async function releaseScanner(scanner: ScannerInstance | null) {
   }
 }
 
-export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
+export function CheckInByCode({ user, onCheckedIn, mode }: CheckInByCodeProps) {
   const { isValid, loading: validating } = useActiveCheckinCode();
   const { checkIn, data } = useApp();
   const { result } = useGeolocation(data.sede.lat, data.sede.lng, data.sede.allowSameDayBooking, data.sede.gpsRadiusMeters);
 
-  const [mode, setMode] = useState<CheckinMode>('pin');
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -220,15 +219,19 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
     setScannerState('idle');
   };
 
-  const selectMode = (next: CheckinMode) => {
-    if (next === mode) return;
-    void stopCamera();
-    setScannerState('idle');
-    setError('');
-    setInput('');
-    setChoices([]);
-    setMode(next);
-  };
+  // Auto-start camera when mode is 'qr'
+  useEffect(() => {
+    if (mode === 'qr') {
+      setError('');
+      setInput('');
+      setChoices([]);
+      void startCamera();
+    } else {
+      void stopCamera();
+      setScannerState('idle');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,101 +253,102 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
     );
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 animate-slide-up space-y-4">
-      <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-        <QrCode className="w-5 h-5 text-blue-700" />
-        Check-in por Código Rotatorio
-      </h2>
-      <p className="text-sm text-slate-500">
-        Ingresa el código PIN de 4 dígitos o escanea el código QR que aparece en la pantalla de la sala de espera.
-        El código cambia cada 5 minutos.
-      </p>
+    <div className="space-y-4">
+      {mode === 'pin' && (
+        <>
+          <p className="text-sm text-slate-500">
+            Ingresa el código PIN de 4 dígitos que aparece en la pantalla de la sala de espera. El código cambia cada 5 minutos.
+          </p>
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => selectMode('pin')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-            mode === 'pin'
-              ? 'bg-blue-700 text-white shadow-sm shadow-blue-200'
-              : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
-          }`}
-        >
-          <Hash className="w-4 h-4" />
-          Código PIN
-        </button>
-        <button
-          onClick={() => selectMode('qr')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-            mode === 'qr'
-              ? 'bg-blue-700 text-white shadow-sm shadow-blue-200'
-              : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
-          }`}
-        >
-          <QrCode className="w-4 h-4" />
-          Código QR
-        </button>
-      </div>
-
-      {choices.length > 0 && (
-        <div className="space-y-3">
-          <p className="text-sm font-semibold text-slate-700">Tienes varias citas. Elige a cuál quieres hacer check-in:</p>
-          {choices.map((apt) => {
-            const todayStr = toLocalDateStr(new Date());
-            const isToday = apt.scheduledDate === todayStr;
-            return (
-              <button
-                key={apt.id}
-                onClick={() => void handleChoose(apt)}
-                disabled={busy || !isToday}
-                className="w-full flex items-center justify-between rounded-xl border-2 border-slate-200 px-4 py-3 text-left hover:border-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="text-sm font-semibold text-slate-800">{apt.scheduledTime}</span>
-                <span className="text-xs text-slate-500">
-                  {isToday ? 'Hoy' : `Solo disponible el ${apt.scheduledDate}`}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {mode === 'pin' ? (
-        <form onSubmit={handlePinSubmit} className="space-y-3">
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={4}
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value.replace(/\D/g, '').slice(0, 4));
-              setError('');
-            }}
-            placeholder="0000"
-            className="w-full text-center text-3xl font-extrabold tracking-[0.5em] font-mono py-4 rounded-xl border-2 border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-800"
-          />
-
-          {error && (
-            <p className="text-sm text-red-600 flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4" />
-              {error}
-            </p>
+          {choices.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-slate-700">Tienes varias citas. Elige a cuál quieres hacer check-in:</p>
+              {choices.map((apt) => {
+                const todayStr = toLocalDateStr(new Date());
+                const isToday = apt.scheduledDate === todayStr;
+                return (
+                  <button
+                    key={apt.id}
+                    onClick={() => void handleChoose(apt)}
+                    disabled={busy || !isToday}
+                    className="w-full flex items-center justify-between rounded-xl border-2 border-slate-200 px-4 py-3 text-left hover:border-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="text-sm font-semibold text-slate-800">{apt.scheduledTime}</span>
+                    <span className="text-xs text-slate-500">
+                      {isToday ? 'Hoy' : `Solo disponible el ${apt.scheduledDate}`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           )}
 
-          <button
-            type="submit"
-            disabled={busy || validating || !input.trim()}
-            className="w-full bg-emerald-500 text-white font-semibold py-3.5 rounded-xl
-                       hover:bg-emerald-600 active:scale-[0.98] transition-all
-                       disabled:opacity-40 disabled:cursor-not-allowed
-                       flex items-center justify-center gap-2 shadow-sm shadow-emerald-200"
-          >
-            {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
-            {busy ? 'Validando...' : 'Confirmar Check-in'}
-            {!busy && <ArrowRight className="w-4 h-4" />}
-          </button>
-        </form>
-      ) : (
+          <form onSubmit={handlePinSubmit} className="space-y-3">
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value.replace(/\D/g, '').slice(0, 4));
+                setError('');
+              }}
+              placeholder="0000"
+              className="w-full text-center text-3xl font-extrabold tracking-[0.5em] font-mono py-4 rounded-xl border-2 border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-800"
+            />
+
+            {error && (
+              <p className="text-sm text-red-600 flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4" />
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={busy || validating || !input.trim()}
+              className="w-full bg-emerald-500 text-white font-semibold py-3.5 rounded-xl
+                         hover:bg-emerald-600 active:scale-[0.98] transition-all
+                         disabled:opacity-40 disabled:cursor-not-allowed
+                         flex items-center justify-center gap-2 shadow-sm shadow-emerald-200"
+            >
+              {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+              {busy ? 'Validando...' : 'Confirmar Check-in'}
+              {!busy && <ArrowRight className="w-4 h-4" />}
+            </button>
+          </form>
+        </>
+      )}
+
+      {mode === 'qr' && (
         <div className="space-y-3">
+          <p className="text-sm text-slate-500">
+            Escanea el código QR que aparece en la pantalla de la sala de espera. El código cambia cada 5 minutos.
+          </p>
+
+          {choices.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-slate-700">Tienes varias citas. Elige a cuál quieres hacer check-in:</p>
+              {choices.map((apt) => {
+                const todayStr = toLocalDateStr(new Date());
+                const isToday = apt.scheduledDate === todayStr;
+                return (
+                  <button
+                    key={apt.id}
+                    onClick={() => void handleChoose(apt)}
+                    disabled={busy || !isToday}
+                    className="w-full flex items-center justify-between rounded-xl border-2 border-slate-200 px-4 py-3 text-left hover:border-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="text-sm font-semibold text-slate-800">{apt.scheduledTime}</span>
+                    <span className="text-xs text-slate-500">
+                      {isToday ? 'Hoy' : `Solo disponible el ${apt.scheduledDate}`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <div className="relative mx-auto w-full max-w-[280px] aspect-square rounded-2xl overflow-hidden bg-slate-900">
             <div id={SCANNER_ELEMENT_ID} className="w-full h-full" />
             {scannerState !== 'scanning' && (
@@ -393,25 +397,16 @@ export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
               <p className="text-sm text-red-700 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
                 {scannerState === 'denied'
-                  ? 'No diste permiso para usar la cámara. Habilítalo en la configuración de tu navegador o ingresa el código PIN de 4 dígitos.'
-                  : 'No se pudo iniciar la cámara de tu dispositivo. Intenta de nuevo o ingresa el código PIN de 4 dígitos.'}
+                  ? 'No diste permiso para usar la cámara. Habilítalo en la configuración de tu navegador.'
+                  : 'No se pudo iniciar la cámara de tu dispositivo. Intenta de nuevo.'}
               </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleStartCamera}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-red-200 text-red-700 font-semibold py-2.5 rounded-lg text-sm hover:bg-red-50 transition-all"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Reintentar
-                </button>
-                <button
-                  onClick={() => selectMode('pin')}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-blue-700 text-white font-semibold py-2.5 rounded-lg text-sm hover:bg-blue-800 transition-all"
-                >
-                  <Hash className="w-4 h-4" />
-                  Usar PIN
-                </button>
-              </div>
+              <button
+                onClick={handleStartCamera}
+                className="w-full flex items-center justify-center gap-1.5 bg-white border border-red-200 text-red-700 font-semibold py-2.5 rounded-lg text-sm hover:bg-red-50 transition-all"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Reintentar
+              </button>
             </div>
           )}
 
