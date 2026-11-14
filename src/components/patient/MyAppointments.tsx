@@ -23,6 +23,7 @@ import { getCallRemainingSeconds } from '../../lib/callTimer';
 import { getOfficialTurn, getTurnsAhead } from '../../lib/queueTurns';
 import { useCalledTurnAlert } from '../../hooks/useCalledTurnAlert';
 import { CheckInByCode } from './CheckInByCode';
+import { QrCode, Hash } from 'lucide-react';
 import { useCheckinActive } from '../../hooks/useCheckinActive';
 import { toLocalDateStr } from '../../lib/cutoff';
 import type { User as AppUser, Appointment, SedeConfig } from '../../types';
@@ -491,6 +492,159 @@ function AppointmentDetailCard({ apt, users, turn }: AppointmentDetailCardProps)
           Se sugiere llegar con 30 minutos de anticipación a su cita.
         </p>
       </div>
+    </div>
+  );
+}
+
+// ============================================================
+// CheckInMethods — unified check-in with 3 methods (GPS, PIN, QR)
+// ============================================================
+type CheckinMethodTab = 'gps' | 'pin' | 'qr';
+
+interface CheckInMethodsProps {
+  user: AppUser;
+  onCheckedIn: () => void;
+  sede: SedeConfig;
+  doctorCedula?: string;
+  checkLocation: () => Promise<GeoResult>;
+  simulateNear: () => void;
+  result: GeoResult;
+  geoOk: boolean;
+  geoLoading: boolean;
+  checkInBusy: boolean;
+  formError: string;
+  onCheckIn: () => void;
+  onShowForm: () => void;
+  showForm: boolean;
+}
+
+function CheckInMethods(props: CheckInMethodsProps) {
+  const { user, onCheckedIn, sede, doctorCedula, checkLocation, simulateNear, result, geoOk, geoLoading, checkInBusy, formError, onCheckIn, onShowForm, showForm } = props;
+  const [methodTab, setMethodTab] = useState<CheckinMethodTab>('gps');
+
+  return (
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 animate-slide-up space-y-4">
+      <h2 className="font-semibold text-slate-800 flex items-center gap-2">
+        <CheckCircle2 className="w-5 h-5 text-blue-700" />
+        Realizar Check-in
+      </h2>
+
+      <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
+        {([
+          { key: 'gps' as const, label: 'GPS', icon: MapPin },
+          { key: 'pin' as const, label: 'PIN', icon: Hash },
+          { key: 'qr' as const, label: 'QR', icon: QrCode },
+        ]).map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setMethodTab(t.key)}
+            className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+              methodTab === t.key
+                ? 'bg-white text-blue-700 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <t.icon className="w-4 h-4" />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {methodTab === 'gps' && (
+        <div className="space-y-3">
+          <p className="text-sm text-slate-500">
+            Cuando te encuentres físicamente en el centro de salud, verifica tu ubicación y confirma tu llegada.
+          </p>
+
+          <CheckInZoneCard sede={sede} patientCedula={user.cedula} doctorCedula={doctorCedula} />
+
+          {!showForm ? (
+            <button
+              onClick={onShowForm}
+              className="w-full bg-emerald-500 text-white font-semibold py-3.5 rounded-xl
+                         hover:bg-emerald-600 active:scale-[0.98] transition-all
+                         flex items-center justify-center gap-2 shadow-sm shadow-emerald-200"
+            >
+              <CheckCircle2 className="w-5 h-5" />
+              Iniciar Check-in GPS
+            </button>
+          ) : (
+            <div className="space-y-3 animate-slide-up">
+              <button
+                onClick={checkLocation}
+                disabled={geoLoading}
+                className="w-full bg-blue-700 text-white font-semibold py-3.5 rounded-xl
+                           hover:bg-blue-800 active:scale-[0.98] transition-all
+                           disabled:opacity-60 flex items-center justify-center gap-2 shadow-sm shadow-blue-200"
+              >
+                {geoLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Navigation className="w-5 h-5" />
+                )}
+                {geoLoading ? 'Verificando...' : 'Verificar Ubicación por GPS'}
+              </button>
+
+              <button
+                onClick={simulateNear}
+                className="w-full text-sm text-blue-700 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+              >
+                O simular ubicación cerca de la sede
+              </button>
+
+              {result.status !== 'idle' && (
+                <div
+                  className={`p-3 rounded-xl flex items-start gap-2.5 animate-slide-up ${
+                    geoOk
+                      ? 'bg-emerald-50 text-emerald-800'
+                      : result.status === 'too-far'
+                        ? 'bg-amber-50 text-amber-800'
+                        : 'bg-red-50 text-red-700'
+                  }`}
+                >
+                  {geoOk ? (
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  )}
+                  <p className="text-sm">{result.message}</p>
+                </div>
+              )}
+
+              {formError && (
+                <p className="text-sm text-red-600 flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4" />
+                  {formError}
+                </p>
+              )}
+
+              <button
+                onClick={onCheckIn}
+                disabled={!geoOk || checkInBusy}
+                className="w-full bg-emerald-500 text-white font-semibold py-3.5 rounded-xl
+                           hover:bg-emerald-600 active:scale-[0.98] transition-all
+                           disabled:opacity-40 disabled:cursor-not-allowed
+                           flex items-center justify-center gap-2 shadow-sm shadow-emerald-200"
+              >
+                {checkInBusy ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5" />
+                )}
+                Confirmar mi llegada
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {methodTab === 'pin' && (
+        <CheckInByCode key="pin" user={user} onCheckedIn={onCheckedIn} />
+      )}
+
+      {methodTab === 'qr' && (
+        <CheckInByCode key="qr" user={user} onCheckedIn={onCheckedIn} />
+      )}
     </div>
   );
 }
