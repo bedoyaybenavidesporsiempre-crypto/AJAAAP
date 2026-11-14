@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { FlaskConical, Loader2, MapPin, QrCode, Power } from 'lucide-react';
+import { FlaskConical, Loader2, Power, MapPin, Save } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { DEFAULT_SEDE } from '../../data/mockData';
-import type { CheckinMethod } from '../../types';
+import { DEFAULT_CHECKIN_RADIUS_METERS } from '../../hooks/useGeolocation';
 
 interface SedeConfigRow {
   id: number;
@@ -143,19 +143,20 @@ function TestSwitch({ title, description, statusOn, statusOff, field }: TestSwit
   );
 }
 
-function CheckinMethodSelector() {
-  const [method, setMethod] = useState<CheckinMethod>('gps');
+function GpsRadiusEditor() {
+  const [value, setValue] = useState(DEFAULT_CHECKIN_RADIUS_METERS);
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const refresh = useCallback(async () => {
     const { data } = await supabase
       .from('sede_config')
-      .select('checkin_method')
+      .select('gps_radius_meters')
       .eq('id', 1)
       .maybeSingle();
-    const row = data as { checkin_method: string } | null;
-    setMethod(row && row.checkin_method === 'code' ? 'code' : 'gps');
+    const row = data as { gps_radius_meters: number } | null;
+    setValue(row?.gps_radius_meters ?? DEFAULT_CHECKIN_RADIUS_METERS);
     setLoaded(true);
   }, []);
 
@@ -166,18 +167,20 @@ function CheckinMethodSelector() {
     })();
   }, [refresh]);
 
-  const handleSelect = async (next: CheckinMethod) => {
-    if (busy || next === method) return;
+  const handleSave = async () => {
+    if (busy) return;
+    const clamped = Math.max(10, Math.min(5000, Math.round(value)));
     setBusy(true);
-    setMethod(next);
     try {
       const { error } = await supabase
         .from('sede_config')
-        .update({ checkin_method: next, updated_at: new Date().toISOString() })
+        .update({ gps_radius_meters: clamped, updated_at: new Date().toISOString() })
         .eq('id', 1);
-      if (error) setMethod(method === 'code' ? 'gps' : 'code');
-    } catch {
-      setMethod(method === 'code' ? 'gps' : 'code');
+      if (!error) {
+        setValue(clamped);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
     } finally {
       setBusy(false);
     }
@@ -187,7 +190,7 @@ function CheckinMethodSelector() {
     return (
       <div className="flex items-center justify-between gap-3 py-1">
         <div className="min-w-0">
-          <p className="font-semibold text-slate-800 text-sm">Método de Check-in</p>
+          <p className="font-semibold text-slate-800 text-sm">Rango de Check-in GPS</p>
           <p className="text-xs text-slate-500 mt-0.5">Cargando...</p>
         </div>
         <Loader2 className="w-5 h-5 text-slate-300 animate-spin flex-shrink-0" />
@@ -198,41 +201,36 @@ function CheckinMethodSelector() {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <p className="font-semibold text-slate-800 text-sm">Método de Check-in</p>
+        <MapPin className="w-4 h-4 text-blue-700 flex-shrink-0" />
+        <p className="font-semibold text-slate-800 text-sm">Rango de Check-in GPS (metros)</p>
       </div>
       <p className="text-xs text-slate-500">
-        Selecciona cómo los pacientes confirman su llegada a la sala de espera.
+        Distancia máxima permitida del paciente para autorizar el check-in por GPS.
       </p>
-      <div className="grid grid-cols-2 gap-2 mt-2">
+      <div className="flex items-center gap-2 mt-2">
+        <input
+          type="number"
+          min={10}
+          max={5000}
+          value={value}
+          onChange={(e) => {
+            setValue(Number(e.target.value));
+            setSaved(false);
+          }}
+          className="flex-1 rounded-lg border-2 border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 focus:border-blue-600 outline-none"
+        />
+        <span className="text-sm text-slate-500">m</span>
         <button
-          onClick={() => handleSelect('gps')}
+          onClick={handleSave}
           disabled={busy}
-          className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all border ${
-            method === 'gps'
-              ? 'border-blue-600 bg-blue-50 text-blue-800 shadow-sm'
-              : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-          } disabled:opacity-60`}
+          className="flex items-center gap-1.5 bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-blue-800 active:scale-[0.98] transition-all disabled:opacity-60"
         >
-          <MapPin className="w-4 h-4" />
-          GPS
-        </button>
-        <button
-          onClick={() => handleSelect('code')}
-          disabled={busy}
-          className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all border ${
-            method === 'code'
-              ? 'border-blue-600 bg-blue-50 text-blue-800 shadow-sm'
-              : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-          } disabled:opacity-60`}
-        >
-          <QrCode className="w-4 h-4" />
-          Código (PIN/QR)
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Guardar
         </button>
       </div>
-      <p className="text-xs text-slate-400">
-        {method === 'gps'
-          ? 'Activo: los pacientes verifican su ubicación por GPS para hacer check-in.'
-          : 'Activo: los pacientes ingresan el PIN o escanean el QR de la pantalla de la sala de espera.'}
+      <p className={`text-xs font-medium ${saved ? 'text-emerald-700' : 'text-slate-400'}`}>
+        {saved ? 'Rango guardado correctamente.' : `Actual: ${value} m de radio.`}
       </p>
     </div>
   );
@@ -336,7 +334,7 @@ export function TestModeTab() {
         Prueba Test
       </h3>
       <CheckinActiveSwitch />
-      <CheckinMethodSelector />
+      <GpsRadiusEditor />
       <TestSwitch
         title="Restricción 30 min para Check-in"
         description="Exige que el paciente haga check-in máximo 30 minutos antes de su cita. Desactívalo para probar a cualquier hora."

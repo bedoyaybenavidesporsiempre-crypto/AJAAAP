@@ -11,6 +11,7 @@ export const DEFAULT_SEDE: SedeConfig = {
   checkinMethod: 'gps',
   isActive: true,
   checkinTimeRestriction: true,
+  gpsRadiusMeters: 100,
 };
 
 export function createMockData(): AppData {

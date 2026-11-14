@@ -10,9 +10,9 @@ export interface GeoResult {
   message: string;
 }
 
-export const CHECKIN_RADIUS_METERS = 100;
+export const DEFAULT_CHECKIN_RADIUS_METERS = 100;
 
-export function useGeolocation(sedeLat: number, sedeLng: number, testMode: boolean) {
+export function useGeolocation(sedeLat: number, sedeLng: number, testMode: boolean, radiusMeters: number) {
   const [result, setResult] = useState<GeoResult>({
     status: 'idle',
     distance: null,
@@ -25,7 +25,7 @@ export function useGeolocation(sedeLat: number, sedeLng: number, testMode: boole
     return readPosition(testMode).then(
       (position) => {
         const distance = calculateDistance(position.lat, position.lng, sedeLat, sedeLng);
-        const withinRange = isWithinGeofence(distance, CHECKIN_RADIUS_METERS);
+        const withinRange = isWithinGeofence(distance, radiusMeters);
         const r: GeoResult = {
           status: withinRange ? 'success' : 'too-far',
           distance: Math.round(distance),
@@ -44,7 +44,7 @@ export function useGeolocation(sedeLat: number, sedeLng: number, testMode: boole
         return r;
       },
     );
-  }, [sedeLat, sedeLng, testMode]);
+  }, [sedeLat, sedeLng, testMode, radiusMeters]);
 
   const simulateNear = useCallback(() => {
     const r: GeoResult = {

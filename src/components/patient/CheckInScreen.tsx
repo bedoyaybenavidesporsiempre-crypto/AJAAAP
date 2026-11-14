@@ -16,6 +16,7 @@ export function CheckInScreen({ user, onCheckedIn }: CheckInScreenProps) {
     data.sede.lat,
     data.sede.lng,
     data.sede.allowSameDayBooking,
+    data.sede.gpsRadiusMeters,
   );
   const doctorCedula = data.appointments.find(
     (a) => a.patientCedula === user.cedula && a.doctorCedula,

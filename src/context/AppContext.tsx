@@ -44,6 +44,7 @@ interface AppContextValue {
   setSameDayBooking: (enabled: boolean) => Promise<void>;
   setWeekendBooking: (enabled: boolean) => Promise<void>;
   setCheckinMethod: (method: 'gps' | 'code') => Promise<void>;
+  setGpsRadius: (meters: number) => Promise<void>;
   setCheckinActive: (active: boolean) => Promise<void>;
   setCheckinTimeRestriction: (enabled: boolean) => Promise<void>;
   addUser: (user: User) => Promise<void>;
@@ -111,6 +112,7 @@ interface DbSedeConfig {
   checkin_method: string;
   is_active: boolean;
   checkin_time_restriction: boolean;
+  gps_radius_meters: number;
 }
 
 interface DbDoctorAvailability {
@@ -316,6 +318,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         checkinMethod: (s.checkin_method === 'code' ? 'code' : 'gps'),
         isActive: s.is_active !== false,
         checkinTimeRestriction: s.checkin_time_restriction !== false,
+        gpsRadiusMeters: s.gps_radius_meters ?? 100,
       };
     }
 
@@ -752,6 +755,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (sede.checkinMethod !== undefined) update.checkin_method = sede.checkinMethod;
     if (sede.isActive !== undefined) update.is_active = sede.isActive;
     if (sede.checkinTimeRestriction !== undefined) update.checkin_time_restriction = sede.checkinTimeRestriction;
+    if (sede.gpsRadiusMeters !== undefined) update.gps_radius_meters = sede.gpsRadiusMeters;
     update.updated_at = new Date().toISOString();
 
     const { error } = await supabase.from('sede_config').update(update).eq('id', 1);
@@ -779,6 +783,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setCheckinMethod = async (method: 'gps' | 'code') => {
     await updateSede({ checkinMethod: method });
+  };
+
+  const setGpsRadius = async (meters: number) => {
+    await updateSede({ gpsRadiusMeters: meters });
   };
 
   const setCheckinActive = async (active: boolean) => {
@@ -1218,6 +1226,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setSameDayBooking,
         setWeekendBooking,
         setCheckinMethod,
+        setGpsRadius,
         setCheckinActive,
         setCheckinTimeRestriction,
         addUser,

@@ -56,7 +56,7 @@ async function releaseScanner(scanner: ScannerInstance | null) {
 export function CheckInByCode({ user, onCheckedIn }: CheckInByCodeProps) {
   const { isValid, loading: validating } = useActiveCheckinCode();
   const { checkIn, data } = useApp();
-  const { result } = useGeolocation(data.sede.lat, data.sede.lng, data.sede.allowSameDayBooking);
+  const { result } = useGeolocation(data.sede.lat, data.sede.lng, data.sede.allowSameDayBooking, data.sede.gpsRadiusMeters);
 
   const [mode, setMode] = useState<CheckinMode>('pin');
   const [input, setInput] = useState('');
