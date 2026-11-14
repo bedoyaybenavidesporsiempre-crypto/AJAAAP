@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Calendar,
   Clock,
@@ -22,6 +22,8 @@ import { useNow, formatCountdown } from '../../hooks/useNow';
 import { getCallRemainingSeconds } from '../../lib/callTimer';
 import { getOfficialTurn, getTurnsAhead } from '../../lib/queueTurns';
 import { useCalledTurnAlert } from '../../hooks/useCalledTurnAlert';
+import { useCalledVibration } from '../../hooks/useCalledVibration';
+import { useNotificationSound } from '../../hooks/useSound';
 import { CheckInByCode } from './CheckInByCode';
 import { QrCode, Hash } from 'lucide-react';
 import { useCheckinActive } from '../../hooks/useCheckinActive';
@@ -57,6 +59,7 @@ function formatTime12h(time24: string): string {
 
 export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
   const { data, getMyScheduledAppointments, checkIn } = useApp();
+  const { playAlert } = useNotificationSound();
   const doctorCedula = data.appointments.find(
     (a) => a.patientCedula === user.cedula && a.doctorCedula,
   )?.doctorCedula;
@@ -113,6 +116,11 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
   const calledKey = currentCall ? `${currentCall.id}-${currentCall.calledAt}` : null;
   const calledTurn = currentCall ? getOfficialTurn(currentCall, data.appointments) : null;
   const alertTurn = useCalledTurnAlert(calledKey, calledTurn);
+  useCalledVibration(!!isCalled);
+
+  useEffect(() => {
+    if (isCalled) playAlert();
+  }, [isCalled, playAlert]);
 
   const handleCheckIn = async () => {
     if (!geoOk || result.distance === null) {

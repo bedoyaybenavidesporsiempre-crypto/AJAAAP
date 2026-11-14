@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useNotificationSound } from '../../hooks/useSound';
+import { useCalledVibration } from '../../hooks/useCalledVibration';
 import { useNow, formatCountdown } from '../../hooks/useNow';
 import { COUNTDOWN_SECONDS } from '../../types';
 import type { User as AppUser, Appointment } from '../../types';
@@ -36,7 +37,7 @@ function getPhase(apt: Appointment | undefined, position: number): Phase {
 
 export function WaitingScreen({ user }: WaitingScreenProps) {
   const { data, getMyAppointment, getQueuePosition, getEstimatedWait } = useApp();
-  const { play } = useNotificationSound();
+  const { play, playAlert } = useNotificationSound();
   const now = useNow(1000);
   const previousPhaseRef = useRef<Phase>('waiting');
   const soundPlayedRef = useRef(false);
@@ -57,21 +58,17 @@ export function WaitingScreen({ user }: WaitingScreenProps) {
   // Play sound when called
   useEffect(() => {
     if (isCalled && !soundPlayedRef.current && previousPhaseRef.current !== 'called') {
-      play();
+      playAlert();
       soundPlayedRef.current = true;
     }
     if (!isCalled) {
       soundPlayedRef.current = false;
     }
     previousPhaseRef.current = phase;
-  }, [isCalled, phase, play]);
+  }, [isCalled, phase, playAlert]);
 
-  // Vibrate when called
-  useEffect(() => {
-    if (isCalled && 'vibrate' in navigator) {
-      navigator.vibrate([200, 100, 200, 100, 200]);
-    }
-  }, [isCalled]);
+  // Continuous vibration when called (5 min loop)
+  useCalledVibration(isCalled);
 
   if (!apt) {
     return (
