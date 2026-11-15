@@ -116,6 +116,7 @@ interface DbSedeConfig {
   is_active: boolean;
   checkin_time_restriction: boolean;
   gps_radius_meters: number;
+  test_mode: boolean;
 }
 
 interface DbDoctorAvailability {
@@ -324,6 +325,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         isActive: s.is_active !== false,
         checkinTimeRestriction: s.checkin_time_restriction !== false,
         gpsRadiusMeters: s.gps_radius_meters ?? 100,
+        testMode: s.test_mode === true,
       };
     }
 

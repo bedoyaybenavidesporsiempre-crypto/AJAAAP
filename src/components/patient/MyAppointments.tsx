@@ -71,12 +71,13 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
     data.sede.gpsRadiusMeters,
   );
   const now = useNow(1000);
-  const { active: checkinActive } = useCheckinActive();
+  const { active: checkinActive, testMode } = useCheckinActive();
   const [checkInBusy, setCheckInBusy] = useState(false);
   const [formError, setFormError] = useState('');
   const [showCheckInForm, setShowCheckInForm] = useState(false);
   const [tab, setTab] = useState<PatientTab>('today');
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const [cancelError, setCancelError] = useState('');
   const [cancelSuccess, setCancelSuccess] = useState('');
 
@@ -150,7 +151,12 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
     return diffDays >= 2;
   };
 
+  const handleCancelClick = (aptId: string) => {
+    setConfirmCancelId(aptId);
+  };
+
   const handleCancel = async (aptId: string) => {
+    setConfirmCancelId(null);
     setCancellingId(aptId);
     setCancelError('');
     setCancelSuccess('');
@@ -173,7 +179,7 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
         users={data.users}
         turn={getOfficialTurn(apt, data.appointments)}
         canCancel={canCancelAppointment(apt)}
-        onCancel={handleCancel}
+        onCancel={handleCancelClick}
       />
     ));
 
@@ -348,14 +354,14 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
           {/* Check-in section — visible when patient has a scheduled appointment today and hasn't checked in */}
           {todayAppts.some((a) => a.status === 'scheduled') && (
             <>
-            {!checkinActive && (
+            {!checkinActive && !testMode && (
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 text-center animate-slide-up space-y-2">
                 <DoorClosed className="w-10 h-10 text-slate-300 mx-auto" />
                 <p className="font-semibold text-slate-700">Recepción Cerrada / Fuera de Servicio</p>
                 <p className="text-sm text-slate-500">El check-in no está disponible en este momento. Acércate a secretaría.</p>
               </div>
             )}
-            {checkinActive && (
+            {(checkinActive || testMode) && (
               <CheckInMethods
                 user={user}
                 onCheckedIn={onCheckedIn}
@@ -412,6 +418,48 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
           <p className="text-xs text-slate-500">{data.sede.address}</p>
         </div>
       </div>
+
+      {/* Cancel confirmation modal */}
+      {confirmCancelId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-slide-up px-4"
+          onClick={() => setConfirmCancelId(null)}
+        >
+          <div
+            className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center mx-auto mb-4">
+              <XCircle className="w-7 h-7 text-rose-500" />
+            </div>
+            <h3 className="font-bold text-slate-800 text-lg mb-2">¿Cancelar esta cita?</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              Esta acción no se puede deshacer. Se notificará a secretaría y al médico.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmCancelId(null)}
+                disabled={!!cancellingId}
+                className="flex-1 bg-slate-100 text-slate-600 font-semibold py-3 rounded-xl
+                           hover:bg-slate-200 active:scale-[0.98] transition-all
+                           disabled:opacity-50"
+              >
+                No, mantener
+              </button>
+              <button
+                onClick={() => handleCancel(confirmCancelId)}
+                disabled={!!cancellingId}
+                className="flex-1 bg-rose-500 text-white font-semibold py-3 rounded-xl
+                           hover:bg-rose-600 active:scale-[0.98] transition-all
+                           disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {cancellingId ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                Sí, cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

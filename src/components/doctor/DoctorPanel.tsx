@@ -29,6 +29,7 @@ import { useNow, formatCountdown } from '../../hooks/useNow';
 import { COUNTDOWN_SECONDS } from '../../types';
 import { getCallRemainingSeconds } from '../../lib/callTimer';
 import { isPastCutoff } from '../../lib/cutoff';
+import { useCheckinActive } from '../../hooks/useCheckinActive';
 import type { User as AppUser, Appointment } from '../../types';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { TabStrip } from '../TabStrip';
@@ -76,7 +77,8 @@ const ALL_SLOTS = [...MORNING_SLOTS, ...AFTERNOON_SLOTS];
 export function DoctorPanel({ user }: DoctorPanelProps) {
   const { data, callNext, finishAttendance, markPresent, markAbsentAndReschedule, getDoctorSchedule, toggleScheduleDay, ensureWeekdaysScheduled, loading, getNotifications, getUnreadNotificationCount, markNotificationsRead } = useApp();
   const now = useNow(1000);
-  const pastCutoff = isPastCutoff(new Date(now));
+  const { testMode } = useCheckinActive();
+  const pastCutoff = testMode ? false : isPastCutoff(new Date(now));
   const [busy, setBusy] = useState(false);
   const [view, setView] = useState<'queue' | 'availability' | 'upcoming'>('queue');
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);

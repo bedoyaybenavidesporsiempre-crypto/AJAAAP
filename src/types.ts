@@ -55,6 +55,7 @@ export interface SedeConfig {
   isActive: boolean;
   checkinTimeRestriction: boolean;
   gpsRadiusMeters: number;
+  testMode: boolean;
 }
 
 export interface DoctorScheduleEntry {
