@@ -50,6 +50,7 @@ interface AppContextValue {
   addUser: (user: User) => Promise<void>;
   removeUser: (cedula: string) => Promise<boolean>;
   scheduleAppointment: (params: ScheduleAppointmentParams) => Promise<{ appointment: Appointment | null; error: string | null }>;
+  cancelAppointment: (appointmentId: string, cancelledBy: 'patient' | 'secretary') => Promise<{ success: boolean; error: string | null }>;
   saveAvailability: (avail: DoctorAvailability) => Promise<void>;
   getDoctorAvailability: (doctorCedula: string) => DoctorAvailability | null;
   saveDoctorSchedule: (entries: DoctorScheduleEntry[]) => Promise<void>;
@@ -98,6 +99,8 @@ interface DbAppointment {
   doctor_id: string | null;
   doctor_name: string | null;
   doctor_specialty: string | null;
+  cancelled_at: string | null;
+  cancelled_by: string | null;
 }
 
 interface DbSedeConfig {
@@ -204,6 +207,8 @@ function mapAppointment(a: DbAppointment): Appointment {
     doctorCedula: a.doctor_id ?? undefined,
     doctorName: a.doctor_name ?? undefined,
     doctorSpecialty: a.doctor_specialty ?? undefined,
+    cancelledAt: a.cancelled_at ? new Date(a.cancelled_at).getTime() : undefined,
+    cancelledBy: a.cancelled_by ?? undefined,
   };
 }
 
@@ -1189,6 +1194,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { id: (updated as DbSpecialty).id, name: (updated as DbSpecialty).name };
   };
 
+  const cancelAppointment = async (
+    appointmentId: string,
+    cancelledBy: 'patient' | 'secretary',
+  ): Promise<{ success: boolean; error: string | null }> => {
+    const now = new Date().toISOString();
+    const { data: updated, error } = await supabase
+      .from('appointments')
+      .update({ status: 'cancelled', cancelled_at: now, cancelled_by: cancelledBy })
+      .eq('id', appointmentId)
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    if (!updated) {
+      return { success: false, error: 'No se encontró la cita.' };
+    }
+
+    const apt = updated as DbAppointment;
+
+    // Notify the doctor
+    if (apt.doctor_id) {
+      const message = `Cita cancelada: ${apt.patient_name} - ${apt.scheduled_date ?? 'Sin fecha'} ${apt.scheduled_time}`;
+      await supabase.from('notifications').insert({
+        doctor_cedula: apt.doctor_id,
+        appointment_id: apt.id,
+        message,
+        patient_name: apt.patient_name,
+        scheduled_date: apt.scheduled_date,
+        scheduled_time: apt.scheduled_time,
+        is_read: false,
+      });
+    }
+
+    // Notify all secretaries (they share role-based visibility; insert one notification per secretary)
+    const { data: secretaries } = await supabase
+      .from('users')
+      .select('cedula')
+      .eq('role', 'secretary');
+    if (secretaries) {
+      const secMessage = `Cita cancelada por ${cancelledBy === 'patient' ? 'el paciente' : 'secretaría'}: ${apt.patient_name} - ${apt.scheduled_date ?? 'Sin fecha'} ${apt.scheduled_time}`;
+      for (const sec of secretaries as { cedula: string }[]) {
+        await supabase.from('notifications').insert({
+          doctor_cedula: sec.cedula,
+          appointment_id: apt.id,
+          message: secMessage,
+          patient_name: apt.patient_name,
+          scheduled_date: apt.scheduled_date,
+          scheduled_time: apt.scheduled_time,
+          is_read: false,
+        });
+      }
+    }
+
+    await loadData();
+    return { success: true, error: null };
+  };
+
   const resetAll = async () => {
     await supabase.from('appointments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     await supabase
@@ -1232,6 +1296,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addUser,
         removeUser,
         scheduleAppointment,
+        cancelAppointment,
         saveAvailability,
         getDoctorAvailability,
         saveDoctorSchedule,

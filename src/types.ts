@@ -15,7 +15,8 @@ export type AppointmentStatus =
   | 'in-attendance'
   | 'attended'
   | 'absent'
-  | 'rescheduled';
+  | 'rescheduled'
+  | 'cancelled';
 
 export interface Appointment {
   id: string;
@@ -36,6 +37,8 @@ export interface Appointment {
   doctorName?: string;
   doctorSpecialty?: string;
   reason?: string;
+  cancelledAt?: number;
+  cancelledBy?: string;
 }
 
 export type CheckinMethod = 'gps' | 'code';

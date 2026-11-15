@@ -14,6 +14,7 @@ import {
   Bell,
   Timer,
   DoorClosed,
+  XCircle,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useGeolocation } from '../../hooks/useGeolocation';
@@ -58,7 +59,7 @@ function formatTime12h(time24: string): string {
 }
 
 export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
-  const { data, getMyScheduledAppointments, checkIn } = useApp();
+  const { data, getMyScheduledAppointments, checkIn, cancelAppointment } = useApp();
   const { playAlert } = useNotificationSound();
   const doctorCedula = data.appointments.find(
     (a) => a.patientCedula === user.cedula && a.doctorCedula,
@@ -75,6 +76,9 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
   const [formError, setFormError] = useState('');
   const [showCheckInForm, setShowCheckInForm] = useState(false);
   const [tab, setTab] = useState<PatientTab>('today');
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState('');
+  const [cancelSuccess, setCancelSuccess] = useState('');
 
   const todayStr = toLocalDateStr(new Date(now));
   const scheduledAppts = getMyScheduledAppointments(user.cedula);
@@ -137,6 +141,30 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
     }
   };
 
+  const canCancelAppointment = (apt: Appointment): boolean => {
+    if (apt.status !== 'scheduled' || !apt.scheduledDate) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const aptDate = new Date(apt.scheduledDate + 'T00:00:00');
+    const diffDays = (aptDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+    return diffDays >= 2;
+  };
+
+  const handleCancel = async (aptId: string) => {
+    setCancellingId(aptId);
+    setCancelError('');
+    setCancelSuccess('');
+    const { success, error } = await cancelAppointment(aptId, 'patient');
+    setCancellingId(null);
+    if (success) {
+      setCancelSuccess('Tu cita ha sido cancelada. Se notificó a secretaría y al médico.');
+      setTimeout(() => setCancelSuccess(''), 5000);
+    } else {
+      setCancelError(error ?? 'No se pudo cancelar la cita. Intenta de nuevo.');
+      setTimeout(() => setCancelError(''), 5000);
+    }
+  };
+
   const renderAppointmentCards = (list: Appointment[]) =>
     list.map((apt) => (
       <AppointmentDetailCard
@@ -144,6 +172,8 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
         apt={apt}
         users={data.users}
         turn={getOfficialTurn(apt, data.appointments)}
+        canCancel={canCancelAppointment(apt)}
+        onCancel={handleCancel}
       />
     ));
 
@@ -212,6 +242,25 @@ export function MyAppointments({ user, onCheckedIn }: MyAppointmentsProps) {
 
       {tab === 'today' && (
         <>
+          {cancelError && (
+            <div className="rounded-2xl p-4 bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-2.5 animate-slide-up">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <p className="font-medium">{cancelError}</p>
+            </div>
+          )}
+          {cancelSuccess && (
+            <div className="rounded-2xl p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm flex items-start gap-2.5 animate-slide-up">
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <p className="font-medium">{cancelSuccess}</p>
+            </div>
+          )}
+          {cancellingId && (
+            <div className="rounded-2xl p-4 bg-blue-50 border border-blue-100 text-blue-700 text-sm flex items-center gap-2.5 animate-slide-up">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <p className="font-medium">Cancelando cita...</p>
+            </div>
+          )}
+
           {/* Active queue status — if checked in */}
           {hasCheckedIn && activeAppt && (
             <div className={`rounded-3xl p-6 shadow-lg transition-all animate-slide-up ${
@@ -375,9 +424,11 @@ interface AppointmentDetailCardProps {
   apt: Appointment;
   users: import('../../types').User[];
   turn: number;
+  canCancel?: boolean;
+  onCancel?: (aptId: string) => void;
 }
 
-function AppointmentDetailCard({ apt, users, turn }: AppointmentDetailCardProps) {
+function AppointmentDetailCard({ apt, users, turn, canCancel, onCancel }: AppointmentDetailCardProps) {
   // Try to find the doctor from the users list
   // The appointment might have doctor info enriched, or we infer from users
   const doctor = users.find((u) => u.role === 'doctor' && u.name === apt.doctorName);
@@ -406,7 +457,9 @@ function AppointmentDetailCard({ apt, users, turn }: AppointmentDetailCardProps)
           ? 'bg-red-50 text-red-700'
           : apt.status === 'in-attendance'
             ? 'bg-emerald-50 text-emerald-700'
-            : 'bg-slate-100 text-slate-600';
+            : apt.status === 'cancelled'
+              ? 'bg-rose-50 text-rose-700'
+              : 'bg-slate-100 text-slate-600';
 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 animate-slide-up space-y-4">
@@ -500,6 +553,19 @@ function AppointmentDetailCard({ apt, users, turn }: AppointmentDetailCardProps)
           Se sugiere llegar con 30 minutos de anticipación a su cita.
         </p>
       </div>
+
+      {/* Cancel button */}
+      {canCancel && onCancel && apt.status === 'scheduled' && (
+        <button
+          onClick={() => onCancel(apt.id)}
+          className="w-full bg-rose-50 text-rose-600 font-semibold py-3 rounded-xl
+                     hover:bg-rose-100 active:scale-[0.98] transition-all
+                     flex items-center justify-center gap-2 border border-rose-200"
+        >
+          <XCircle className="w-5 h-5" />
+          Cancelar Cita
+        </button>
+      )}
     </div>
   );
 }
