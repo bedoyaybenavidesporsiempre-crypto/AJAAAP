@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, CreditCard, Navigation, Loader2, CheckCircle2, AlertTriangle, Stethoscope, MapPin } from 'lucide-react';
+import { User, CreditCard, Navigation, Loader2, CheckCircle2, AlertTriangle, Stethoscope, MapPin, Eye, EyeOff } from 'lucide-react';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useApp } from '../../context/AppContext';
 import { CheckInZoneCard } from './CheckInZoneCard';
@@ -23,6 +23,7 @@ export function CheckInScreen({ user, onCheckedIn }: CheckInScreenProps) {
   )?.doctorCedula;
   const [name, setName] = useState(user.name);
   const [cedula, setCedula] = useState(user.cedula);
+  const [showCedula, setShowCedula] = useState(false);
   const [formError, setFormError] = useState('');
 
   const geoOk = result.status === 'success' || result.status === 'simulated';
@@ -153,7 +154,7 @@ export function CheckInScreen({ user, onCheckedIn }: CheckInScreenProps) {
             <div className="relative">
               <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input
-                type="text"
+                type={showCedula ? 'text' : 'password'}
                 inputMode="numeric"
                 value={cedula}
                 onChange={(e) => {
@@ -161,10 +162,18 @@ export function CheckInScreen({ user, onCheckedIn }: CheckInScreenProps) {
                   setFormError('');
                 }}
                 placeholder="Ej. 12345678"
-                className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200
+                className="w-full pl-11 pr-12 py-3 rounded-xl border border-slate-200
                            focus:border-blue-600 focus:ring-2 focus:ring-blue-100
                            outline-none transition-all text-slate-800"
               />
+              <button
+                type="button"
+                onClick={() => setShowCedula((s) => !s)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label={showCedula ? 'Ocultar documento' : 'Mostrar documento'}
+              >
+                {showCedula ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
           </div>
         </div>
